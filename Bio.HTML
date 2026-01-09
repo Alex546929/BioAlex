@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALEX | SYSTEM_MAINFRAME</title>
+    <style>
+        :root {
+            --neon: #00FF41;
+            --dark-neon: #003B00;
+            --alert: #ff003c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body, html {
+            background-color: #000;
+            color: var(--neon);
+            font-family: 'Courier New', Courier, monospace;
+            min-height: 100vh;
+            width: 100%;
+            overflow-x: hidden;
+            text-transform: uppercase;
+        }
+
+        /* Глитч-эффект при закрытии окна взлома */
+        .glitch-active { animation: global-glitch 0.2s infinite; filter: contrast(150%) brightness(120%); }
+        @keyframes global-glitch {
+            0% { transform: translate(2px, -2px); }
+            50% { transform: translate(-2px, 2px); filter: hue-rotate(90deg); }
+            100% { transform: translate(1px, 1px); }
+        }
+
+        .crt-overlay {
+            position: fixed; inset: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+            background-size: 100% 3px, 3px 100%;
+            z-index: 100; pointer-events: none;
+        }
+
+        /* 1. ЭКРАН ФАТАЛЬНОЙ ОШИБКИ */
+        #fatal-error-screen {
+            position: fixed; inset: 0; background: #000; z-index: 5000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: 20px; text-align: center;
+        }
+        .error-box { border: 2px solid var(--alert); padding: 30px; box-shadow: 0 0 20px var(--alert); }
+        .error-code { color: var(--alert); font-size: 2rem; margin-bottom: 10px; animation: blink 0.5s infinite; }
+
+        /* 2. ОКНО ВЗЛОМА (Шанс 30%) */
+        #alert-modal {
+            display: none; position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); width: 90%; max-width: 400px;
+            background: #000; border: 2px solid var(--alert);
+            padding: 20px; z-index: 2000; box-shadow: 0 0 30px var(--alert); text-align: center;
+        }
+
+        /* 3. ЭКРАН TERMUX */
+        #loading-screen {
+            display: none; position: fixed; inset: 0; background: #000; z-index: 1000;
+            padding: 20px; font-size: 0.8rem; flex-direction: column;
+        }
+        .termux-log { color: var(--neon); line-height: 1.2; }
+
+        /* ИНТЕРФЕЙС */
+        .wrapper { display: none; padding: 15px; max-width: 1200px; margin: 0 auto; flex-direction: column; gap: 15px; }
+        .header-panel { border: 1px solid var(--dark-neon); padding: 10px; display: flex; justify-content: space-between; font-size: 0.7rem; background: rgba(0,20,0,0.5); }
+        .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        @media (max-width: 768px) { .main-grid { grid-template-columns: 1fr; } }
+
+        .module { border: 1px solid var(--dark-neon); background: rgba(0, 10, 0, 0.8); padding: 15px; position: relative; }
+        .module-label { position: absolute; top: 0; right: 0; background: var(--dark-neon); color: var(--neon); padding: 2px 8px; font-size: 0.6rem; }
+        .module-title { border-bottom: 1px solid var(--dark-neon); margin-bottom: 15px; padding-bottom: 5px; font-size: 0.9rem; font-weight: bold; }
+
+        .node-btn {
+            display: block; width: 100%; padding: 15px; margin-top: 10px;
+            border: 1px solid var(--neon); background: rgba(0, 255, 65, 0.05);
+            color: var(--neon); text-decoration: none; text-align: center; font-weight: bold;
+            cursor: pointer; font-family: inherit; transition: 0.2s;
+        }
+        .node-btn:hover { background: var(--neon); color: #000; }
+        
+        .alert-btn { display: block; width: 100%; padding: 10px; margin-top: 10px; border: 1px solid var(--alert); background: rgba(255, 0, 60, 0.1); color: var(--alert); text-decoration: none; cursor: pointer; font-family: inherit; }
+        .alert-btn:hover { background: var(--alert); color: #000; }
+
+        .warning-text { font-size: 0.65rem; color: var(--neon); margin-top: 10px; line-height: 1.3; border: 1px solid var(--dark-neon); padding: 5px; background: rgba(0, 255, 65, 0.05); min-height: 40px; }
+        .data-list { list-style: none; font-size: 0.85rem; }
+        .data-list li { margin-bottom: 8px; }
+        .tag-group { display: flex; flex-wrap: wrap; gap: 8px; }
+        .tag { border: 1px solid var(--neon); padding: 5px 10px; font-size: 0.75rem; background: rgba(0,255,65,0.1); opacity: 0; }
+        
+        .console-area { border: 1px solid var(--neon); background: rgba(0, 30, 0, 0.3); padding: 15px; min-height: 80px; }
+        .cursor { display: inline-block; width: 8px; height: 1rem; background: var(--neon); animation: blink 0.8s infinite; vertical-align: middle; }
+        @keyframes blink { 50% { opacity: 0; } }
+        .type-effect { visibility: hidden; }
+    </style>
+</head>
+<body>
+
+<div class="crt-overlay"></div>
+
+<div id="fatal-error-screen">
+    <div class="error-box">
+        <div class="error-code">ФАТАЛЬНАЯ ОШИБКА</div>
+        <p style="color: #fff; margin-bottom: 20px;">ERROR 404: SYSTEM_INTEGRITY_COMPROMISED</p>
+        <button id="repair-btn" class="alert-btn" onclick="startRepair()">РЕШИТЬ ОШИБКУ</button>
+        <div id="repair-logs" style="margin-top: 15px; font-size: 0.7rem; color: var(--neon); text-align: left;"></div>
+    </div>
+</div>
+
+<div id="alert-modal">
+    <div class="error-code" style="font-size: 1.5rem;">ВНИМАНИЕ!</div>
+    <p style="color: #fff; margin-bottom: 10px;">ВЫ ВЗЛОМАНЫ</p>
+    <p style="color: #fff; margin-bottom: 15px;">ВАШИ ДАННЫЕ У НАС. ВЫБИРАЙТЕ ЧТО БУДЕТЕ ДЕЛАТЬ</p>
+    <a href="https://t.me/AmericanPsho" target="_blank" class="alert-btn">ОСПОРЯТЬ РЕШЕНИЕ</a>
+    <button class="alert-btn" onclick="triggerSystemFailure()">ЗАКРЫТЬ ОКНО</button>
+</div>
+
+<div id="loading-screen"></div>
+
+<div class="wrapper" id="main-ui">
+    <header class="header-panel">
+        <span>USER: GUEST</span>
+        <span id="sys-clock">00:00:00</span>
+        <span>STATUS: SECURE</span>
+    </header>
+
+    <div class="main-grid">
+        <div class="module">
+            <div class="module-label">ID_FILE</div>
+            <div class="module-title">> IDENTITY</div>
+            <ul class="data-list">
+                <li><span class="type-effect" data-text="NAME: ALEX"></span></li>
+                <li><span class="type-effect" data-text="AGE: 15"></span></li>
+                <li><span class="type-effect" data-text="LANG: RU / EN"></span></li>
+                <li><span class="type-effect" data-text="PROGRAMMING LANGUAGES: LUA, HTML"></span></li>
+            </ul>
+        </div>
+
+        <div class="module">
+            <div class="module-label">NET_LINKS</div>
+            <div class="module-title">> CONTACT_NODES</div>
+            <div class="warning-text">
+                <span class="type-effect" data-speed="20" data-text="При переходе на данные ссылки вы автоматически даете согласие на обработку персональных данных"></span>
+            </div>
+            <a href="https://t.me/GameHubHelio99" target="_blank" class="node-btn">TELEGRAM</a>
+            <a href="https://alex546929.github.io/SteamGame/" target="_blank" class="node-btn">MY WEBSITE</a>
+        </div>
+
+        <div class="module">
+            <div class="module-label">SCRIPT_V3</div>
+            <div class="module-title">> MY ROBLOX SCRIPT:</div>
+            <button class="node-btn" onclick="copyScript(this)">COPY SCRIPT TO CLIPBOARD</button>
+        </div>
+
+        <div class="module">
+            <div class="module-label">DATA_ARC</div>
+            <div class="module-title">> THE BEST GAMES</div>
+            <div class="tag-group">
+                <div class="tag">BRICK RIGS</div>
+                <div class="tag">TEARDOWN</div>
+                <div class="tag">GTA IV</div>
+                <div class="tag">STRAY</div>
+                <div class="tag">HITMAN ABSOLUTION</div>
+                <div class="tag">SLEEPING DOGS</div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="console-area">
+        <div id="out">> </div>
+        <span class="cursor"></span>
+    </footer>
+</div>
+
+<script>
+    setInterval(() => { document.getElementById('sys-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+
+    // 1. ИСПРАВЛЕНИЕ ОШИБКИ (6 сек)
+    function startRepair() {
+        const btn = document.getElementById('repair-btn');
+        const logsBox = document.getElementById('repair-logs');
+        btn.disabled = true; btn.innerText = "ИСПРАВЛЕНИЕ...";
+        const steps = ["Detecting sectors...", "Cleaning cache...", "Patching Error404...", "Finalizing..."];
+        let s = 0;
+        const iv = setInterval(() => {
+            if(s < steps.length) { logsBox.innerHTML += `<div>> ${steps[s]}</div>`; s++; }
+            else {
+                clearInterval(iv);
+                setTimeout(() => {
+                    document.getElementById('fatal-error-screen').style.display = 'none';
+                    document.getElementById('loading-screen').style.display = 'flex';
+                    showTermuxLogs();
+                }, 1000);
+            }
+        }, 1200);
+    }
+
+    // 2. TERMUX + ШАНС 30%
+    function showTermuxLogs() {
+        const logs = ["pkg update", "Reading database...", "Injecting subject data...", "STARTING MAIN_FRAME..."];
+        let currentLog = 0;
+        const loadScreen = document.getElementById('loading-screen');
+        function step() {
+            if (currentLog < logs.length) {
+                const line = document.createElement('div'); line.className = 'termux-log';
+                line.innerHTML = `[${new Date().toLocaleTimeString()}] ${logs[currentLog]}`;
+                loadScreen.appendChild(line);
+                currentLog++; setTimeout(step, 300);
+            } else {
+                setTimeout(() => {
+                    loadScreen.style.display = 'none';
+                    document.getElementById('main-ui').style.display = 'flex';
+                    initAllTyping();
+                    
+                    // ШАНС 30% НА ВЗЛОМ
+                    if (Math.random() <= 0.30) {
+                        setTimeout(() => { document.getElementById('alert-modal').style.display = 'block'; }, 10000);
+                    }
+                }, 800);
+            }
+        }
+        step();
+    }
+
+    // КОПИРОВАНИЕ
+    function copyScript(btn) {
+        const script = `loadstring(game:HttpGet("https://raw.githubusercontent.com/ScripterDeltaX/UniversalScript/refs/heads/main/InkGame-mm2UniversalAndOthers.lua"))()`;
+        navigator.clipboard.writeText(script).then(() => {
+            const old = btn.innerText; btn.innerText = "COPIED!";
+            setTimeout(() => { btn.innerText = old; }, 2000);
+        });
+    }
+
+    // ГЛИТЧ ПРИ ЗАКРЫТИИ
+    function triggerSystemFailure() {
+        document.getElementById('alert-modal').style.display = 'none';
+        document.body.classList.add('glitch-active');
+        document.getElementById('out').innerHTML = "SYSTEM OVERLOAD: CRITICAL FAILURE DETECTED...";
+    }
+
+    // АНИМАЦИЯ ПЕЧАТИ
+    function typeEffect(element, callback) {
+        const text = element.getAttribute('data-text');
+        const speed = element.getAttribute('data-speed') || 50;
+        let i = 0; element.style.visibility = 'visible';
+        function step() {
+            if (i < text.length) { element.innerHTML += text.charAt(i); i++; setTimeout(step, speed); }
+            else if (callback) callback();
+        }
+        step();
+    }
+
+    function initAllTyping() {
+        const elements = document.querySelectorAll('.type-effect');
+        let index = 0;
+        function next() {
+            if (index < elements.length) { typeEffect(elements[index], () => { index++; next(); }); }
+            else {
+                document.querySelectorAll('.tag').forEach((t, i) => { setTimeout(() => { t.style.opacity = "1"; }, i * 150); });
+                const finalMsg = "ВЛАДЕЛЕЦ ДАННОГО САЙТА НАХОДИТСЯ В МЕЖДУНАРОДНОМ РОЗЫСКЕ";
+                let j = 0; const out = document.getElementById('out');
+                function lastType() { if (j < finalMsg.length) { out.innerHTML += finalMsg.charAt(j); j++; setTimeout(lastType, 100); } }
+                lastType();
+            }
+        }
+        next();
+    }
+</script>
+</body>
+</html>
