@@ -94,8 +94,6 @@
 
 <div class="crt-overlay"></div>
 
-<audio id="keyboard-sound" src="computer-keyboard.mp3" preload="auto"></audio>
-
 <div id="alert-modal">
     <div style="color: var(--alert); font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; animation: blink 0.5s infinite;">ВНИМАНИЕ!</div>
     <p style="color: #fff; margin-bottom: 10px;">ВЫ ВЗЛОМАНЫ</p>
@@ -163,15 +161,6 @@
 </div>
 
 <script>
-    const keyboardSound = document.getElementById('keyboard-sound');
-
-    function playTypeSound() {
-        // Клонируем узел звука, чтобы он мог накладываться сам на себя при быстрой печати
-        const soundClone = keyboardSound.cloneNode();
-        soundClone.volume = 0.2;
-        soundClone.play().catch(e => console.log("Sound waiting for interaction"));
-    }
-
     setInterval(() => { document.getElementById('sys-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 
     window.onload = function() {
@@ -181,11 +170,16 @@
     function showTermuxLogs() {
         const logs = [
             {t: "apt update && apt upgrade -y", c: "log-blue"},
-            {t: "Connecting to global_server...", c: ""},
-            {t: "Bypassing Pentagon Firewall...", c: "log-yellow"},
-            {t: "Hacking NASA coffee machine...", c: ""},
-            {t: "Finalizing ALEX_OS boot sequence...", c: "log-yellow"},
-            {t: "READY TO GO.", c: ""}
+            {t: "Bypassing protocols...", c: ""},
+            {t: "INITIATING: H4CK1NG_Y0UR_455...", c: "log-red"},
+            {t: "Status: IN PROGRESS... DONE.", c: "log-yellow"},
+            {t: "Downloading more RAM (Free 2026)...", c: "log-blue"},
+            {t: "Locating your cat... FOUND.", c: ""},
+            {t: "Scanning for snacks... [0 FOUND]", c: "log-red"},
+            {t: "Sending anonymous pizza to your IP...", c: "log-blue"},
+            {t: "Stealing 0.000001 BTC... Success.", c: "log-yellow"},
+            {t: "Finalizing boot sequence...", c: ""},
+            {t: "SYSTEM READY. WELCOME, ALEX.", c: "log-blue"}
         ];
         
         let currentLog = 0;
@@ -197,10 +191,9 @@
                 line.className = 'termux-log ' + logs[currentLog].c;
                 line.innerHTML = `[~] ${logs[currentLog].t}`;
                 loadScreen.appendChild(line);
-                playTypeSound();
                 loadScreen.scrollTop = loadScreen.scrollHeight;
                 currentLog++; 
-                setTimeout(step, 400);
+                setTimeout(step, 300);
             } else {
                 setTimeout(() => {
                     loadScreen.style.display = 'none';
@@ -225,6 +218,7 @@
     function triggerSystemFailure() {
         document.getElementById('alert-modal').style.display = 'none';
         document.body.classList.add('glitch-active');
+        document.getElementById('out').innerHTML = "CRITICAL ERROR: HACKER DETECTED IN SYSTEM...";
     }
 
     function typeEffect(element, callback) {
@@ -234,7 +228,6 @@
         function step() {
             if (i < text.length) { 
                 element.innerHTML += text.charAt(i); 
-                playTypeSound(); 
                 i++; 
                 setTimeout(step, speed); 
             }
@@ -255,7 +248,6 @@
                 function lastType() { 
                     if (j < finalMsg.length) { 
                         out.innerHTML += finalMsg.charAt(j); 
-                        playTypeSound(); 
                         j++; 
                         setTimeout(lastType, 100); 
                     } 
