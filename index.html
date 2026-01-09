@@ -94,6 +94,8 @@
 
 <div class="crt-overlay"></div>
 
+<audio id="keyboard-sound" src="computer-keyboard.mp3" preload="auto"></audio>
+
 <div id="alert-modal">
     <div style="color: var(--alert); font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; animation: blink 0.5s infinite;">ВНИМАНИЕ!</div>
     <p style="color: #fff; margin-bottom: 10px;">ВЫ ВЗЛОМАНЫ</p>
@@ -161,26 +163,18 @@
 </div>
 
 <script>
-    // --- ГЕНЕРАТОР ЗВУКА КЛАВИАТУРЫ ---
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const keyboardSound = document.getElementById('keyboard-sound');
+
     function playTypeSound() {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(150 + Math.random() * 100, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.01, audioCtx.currentTime); // Тихий звук
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.05);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.05);
+        // Клонируем узел звука, чтобы он мог накладываться сам на себя при быстрой печати
+        const soundClone = keyboardSound.cloneNode();
+        soundClone.volume = 0.2;
+        soundClone.play().catch(e => console.log("Sound waiting for interaction"));
     }
 
     setInterval(() => { document.getElementById('sys-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 
     window.onload = function() {
-        // Звук может не работать без первого клика пользователя в некоторых браузерах
-        // Но обычно в WebView/Mobile работает сразу
         showTermuxLogs();
     };
 
@@ -203,7 +197,7 @@
                 line.className = 'termux-log ' + logs[currentLog].c;
                 line.innerHTML = `[~] ${logs[currentLog].t}`;
                 loadScreen.appendChild(line);
-                playTypeSound(); // Звук при логах
+                playTypeSound();
                 loadScreen.scrollTop = loadScreen.scrollHeight;
                 currentLog++; 
                 setTimeout(step, 400);
@@ -233,7 +227,6 @@
         document.body.classList.add('glitch-active');
     }
 
-    // --- ФУНКЦИЯ ПЕЧАТИ СО ЗВУКОМ ---
     function typeEffect(element, callback) {
         const text = element.getAttribute('data-text');
         const speed = element.getAttribute('data-speed') || 50;
@@ -241,7 +234,7 @@
         function step() {
             if (i < text.length) { 
                 element.innerHTML += text.charAt(i); 
-                playTypeSound(); // Звук при каждой букве
+                playTypeSound(); 
                 i++; 
                 setTimeout(step, speed); 
             }
@@ -262,7 +255,7 @@
                 function lastType() { 
                     if (j < finalMsg.length) { 
                         out.innerHTML += finalMsg.charAt(j); 
-                        playTypeSound(); // Звук для финальной фразы
+                        playTypeSound(); 
                         j++; 
                         setTimeout(lastType, 100); 
                     } 
