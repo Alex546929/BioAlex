@@ -23,7 +23,7 @@
             text-transform: uppercase;
         }
 
-        /* Глитч-эффект при закрытии окна взлома */
+        /* Эффект глитча */
         .glitch-active { animation: global-glitch 0.2s infinite; filter: contrast(150%) brightness(120%); }
         @keyframes global-glitch {
             0% { transform: translate(2px, -2px); }
@@ -39,7 +39,7 @@
             z-index: 100; pointer-events: none;
         }
 
-        /* 1. ЭКРАН ФАТАЛЬНОЙ ОШИБКИ */
+        /* ЭКРАН ФАТАЛЬНОЙ ОШИБКИ */
         #fatal-error-screen {
             position: fixed; inset: 0; background: #000; z-index: 5000;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
@@ -48,7 +48,7 @@
         .error-box { border: 2px solid var(--alert); padding: 30px; box-shadow: 0 0 20px var(--alert); }
         .error-code { color: var(--alert); font-size: 2rem; margin-bottom: 10px; animation: blink 0.5s infinite; }
 
-        /* 2. ОКНО ВЗЛОМА (Шанс 30%) */
+        /* ОКНО ВЗЛОМА */
         #alert-modal {
             display: none; position: fixed; top: 50%; left: 50%;
             transform: translate(-50%, -50%); width: 90%; max-width: 400px;
@@ -56,14 +56,14 @@
             padding: 20px; z-index: 2000; box-shadow: 0 0 30px var(--alert); text-align: center;
         }
 
-        /* 3. ЭКРАН TERMUX */
+        /* ЭКРАН TERMUX */
         #loading-screen {
             display: none; position: fixed; inset: 0; background: #000; z-index: 1000;
             padding: 20px; font-size: 0.8rem; flex-direction: column;
         }
         .termux-log { color: var(--neon); line-height: 1.2; }
 
-        /* ИНТЕРФЕЙС */
+        /* ОСНОВНОЙ ИНТЕРФЕЙС */
         .wrapper { display: none; padding: 15px; max-width: 1200px; margin: 0 auto; flex-direction: column; gap: 15px; }
         .header-panel { border: 1px solid var(--dark-neon); padding: 10px; display: flex; justify-content: space-between; font-size: 0.7rem; background: rgba(0,20,0,0.5); }
         .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
@@ -175,9 +175,19 @@
 </div>
 
 <script>
+    // Обновление времени
     setInterval(() => { document.getElementById('sys-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 
-    // 1. ИСПРАВЛЕНИЕ ОШИБКИ (6 сек)
+    // ПРОВЕРКА: Была ли решена ошибка ранее?
+    window.onload = function() {
+        if (localStorage.getItem('system_repaired') === 'true') {
+            document.getElementById('fatal-error-screen').style.display = 'none';
+            document.getElementById('loading-screen').style.display = 'flex';
+            showTermuxLogs();
+        }
+    };
+
+    // Исправление ошибки
     function startRepair() {
         const btn = document.getElementById('repair-btn');
         const logsBox = document.getElementById('repair-logs');
@@ -188,6 +198,7 @@
             if(s < steps.length) { logsBox.innerHTML += `<div>> ${steps[s]}</div>`; s++; }
             else {
                 clearInterval(iv);
+                localStorage.setItem('system_repaired', 'true'); // Запоминаем решение
                 setTimeout(() => {
                     document.getElementById('fatal-error-screen').style.display = 'none';
                     document.getElementById('loading-screen').style.display = 'flex';
@@ -197,7 +208,7 @@
         }, 1200);
     }
 
-    // 2. TERMUX + ШАНС 30%
+    // Termux логи + Шанс взлома
     function showTermuxLogs() {
         const logs = ["pkg update", "Reading database...", "Injecting subject data...", "STARTING MAIN_FRAME..."];
         let currentLog = 0;
@@ -213,8 +224,6 @@
                     loadScreen.style.display = 'none';
                     document.getElementById('main-ui').style.display = 'flex';
                     initAllTyping();
-                    
-                    // ШАНС 30% НА ВЗЛОМ
                     if (Math.random() <= 0.30) {
                         setTimeout(() => { document.getElementById('alert-modal').style.display = 'block'; }, 10000);
                     }
@@ -224,7 +233,7 @@
         step();
     }
 
-    // КОПИРОВАНИЕ
+    // Копирование скрипта
     function copyScript(btn) {
         const script = `loadstring(game:HttpGet("https://raw.githubusercontent.com/ScripterDeltaX/UniversalScript/refs/heads/main/InkGame-mm2UniversalAndOthers.lua"))()`;
         navigator.clipboard.writeText(script).then(() => {
@@ -233,14 +242,14 @@
         });
     }
 
-    // ГЛИТЧ ПРИ ЗАКРЫТИИ
+    // Глитч при закрытии взлома
     function triggerSystemFailure() {
         document.getElementById('alert-modal').style.display = 'none';
         document.body.classList.add('glitch-active');
         document.getElementById('out').innerHTML = "SYSTEM OVERLOAD: CRITICAL FAILURE DETECTED...";
     }
 
-    // АНИМАЦИЯ ПЕЧАТИ
+    // Эффект печати
     function typeEffect(element, callback) {
         const text = element.getAttribute('data-text');
         const speed = element.getAttribute('data-speed') || 50;
