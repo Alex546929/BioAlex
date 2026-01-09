@@ -45,7 +45,6 @@
             padding: 20px; z-index: 2000; box-shadow: 0 0 30px var(--alert); text-align: center;
         }
 
-        /* ЭКРАН TERMUX (Улучшенный) */
         #loading-screen {
             position: fixed; inset: 0; background: #000; z-index: 1000;
             padding: 20px; font-size: 0.75rem; flex-direction: column;
@@ -162,25 +161,35 @@
 </div>
 
 <script>
+    // --- ГЕНЕРАТОР ЗВУКА КЛАВИАТУРЫ ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playTypeSound() {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(150 + Math.random() * 100, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.01, audioCtx.currentTime); // Тихий звук
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.05);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.05);
+    }
+
     setInterval(() => { document.getElementById('sys-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 
     window.onload = function() {
+        // Звук может не работать без первого клика пользователя в некоторых браузерах
+        // Но обычно в WebView/Mobile работает сразу
         showTermuxLogs();
     };
 
     function showTermuxLogs() {
         const logs = [
             {t: "apt update && apt upgrade -y", c: "log-blue"},
-            {t: "Connecting to global_server... [OK]", c: ""},
-            {t: "Bypassing Pentagon Firewall... Done.", c: "log-yellow"},
-            {t: "Downloading 1TB of cookies... 45%", c: ""},
-            {t: "ERROR: Fridge is empty. Go buy some cola.", c: "log-red"},
-            {t: "Mining Bitcoin on calculator... Speed: 0.0001 H/s", c: ""},
-            {t: "Scanning user social life... [NOT FOUND]", c: "log-yellow"},
-            {t: "Hacking NASA coffee machine... Success!", c: ""},
-            {t: "Deleting homework folder... Just kidding.", c: "log-blue"},
-            {t: "Cleaning system from cringe content...", c: ""},
-            {t: "Applying dark theme to the soul...", c: ""},
+            {t: "Connecting to global_server...", c: ""},
+            {t: "Bypassing Pentagon Firewall...", c: "log-yellow"},
+            {t: "Hacking NASA coffee machine...", c: ""},
             {t: "Finalizing ALEX_OS boot sequence...", c: "log-yellow"},
             {t: "READY TO GO.", c: ""}
         ];
@@ -194,9 +203,10 @@
                 line.className = 'termux-log ' + logs[currentLog].c;
                 line.innerHTML = `[~] ${logs[currentLog].t}`;
                 loadScreen.appendChild(line);
+                playTypeSound(); // Звук при логах
                 loadScreen.scrollTop = loadScreen.scrollHeight;
                 currentLog++; 
-                setTimeout(step, 350);
+                setTimeout(step, 400);
             } else {
                 setTimeout(() => {
                     loadScreen.style.display = 'none';
@@ -221,15 +231,20 @@
     function triggerSystemFailure() {
         document.getElementById('alert-modal').style.display = 'none';
         document.body.classList.add('glitch-active');
-        document.getElementById('out').innerHTML = "SYSTEM OVERLOAD: CRITICAL FAILURE DETECTED...";
     }
 
+    // --- ФУНКЦИЯ ПЕЧАТИ СО ЗВУКОМ ---
     function typeEffect(element, callback) {
         const text = element.getAttribute('data-text');
         const speed = element.getAttribute('data-speed') || 50;
         let i = 0; element.style.visibility = 'visible';
         function step() {
-            if (i < text.length) { element.innerHTML += text.charAt(i); i++; setTimeout(step, speed); }
+            if (i < text.length) { 
+                element.innerHTML += text.charAt(i); 
+                playTypeSound(); // Звук при каждой букве
+                i++; 
+                setTimeout(step, speed); 
+            }
             else if (callback) callback();
         }
         step();
@@ -244,7 +259,14 @@
                 document.querySelectorAll('.tag').forEach((t, i) => { setTimeout(() => { t.style.opacity = "1"; }, i * 150); });
                 const finalMsg = "ВЛАДЕЛЕЦ ДАННОГО САЙТА НАХОДИТСЯ В МЕЖДУНАРОДНОМ РОЗЫСКЕ";
                 let j = 0; const out = document.getElementById('out');
-                function lastType() { if (j < finalMsg.length) { out.innerHTML += finalMsg.charAt(j); j++; setTimeout(lastType, 100); } }
+                function lastType() { 
+                    if (j < finalMsg.length) { 
+                        out.innerHTML += finalMsg.charAt(j); 
+                        playTypeSound(); // Звук для финальной фразы
+                        j++; 
+                        setTimeout(lastType, 100); 
+                    } 
+                }
                 lastType();
             }
         }
