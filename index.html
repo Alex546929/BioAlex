@@ -23,7 +23,6 @@
             text-transform: uppercase;
         }
 
-        /* Эффект глитча */
         .glitch-active { animation: global-glitch 0.2s infinite; filter: contrast(150%) brightness(120%); }
         @keyframes global-glitch {
             0% { transform: translate(2px, -2px); }
@@ -39,16 +38,6 @@
             z-index: 100; pointer-events: none;
         }
 
-        /* ЭКРАН ФАТАЛЬНОЙ ОШИБКИ */
-        #fatal-error-screen {
-            position: fixed; inset: 0; background: #000; z-index: 5000;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            padding: 20px; text-align: center;
-        }
-        .error-box { border: 2px solid var(--alert); padding: 30px; box-shadow: 0 0 20px var(--alert); }
-        .error-code { color: var(--alert); font-size: 2rem; margin-bottom: 10px; animation: blink 0.5s infinite; }
-
-        /* ОКНО ВЗЛОМА */
         #alert-modal {
             display: none; position: fixed; top: 50%; left: 50%;
             transform: translate(-50%, -50%); width: 90%; max-width: 400px;
@@ -56,14 +45,17 @@
             padding: 20px; z-index: 2000; box-shadow: 0 0 30px var(--alert); text-align: center;
         }
 
-        /* ЭКРАН TERMUX */
+        /* ЭКРАН TERMUX (Улучшенный) */
         #loading-screen {
-            display: none; position: fixed; inset: 0; background: #000; z-index: 1000;
-            padding: 20px; font-size: 0.8rem; flex-direction: column;
+            position: fixed; inset: 0; background: #000; z-index: 1000;
+            padding: 20px; font-size: 0.75rem; flex-direction: column;
+            display: flex; overflow-y: auto;
         }
-        .termux-log { color: var(--neon); line-height: 1.2; }
+        .termux-log { color: var(--neon); line-height: 1.2; margin-bottom: 2px; }
+        .log-blue { color: #00d4ff; }
+        .log-yellow { color: #ffff00; }
+        .log-red { color: var(--alert); }
 
-        /* ОСНОВНОЙ ИНТЕРФЕЙС */
         .wrapper { display: none; padding: 15px; max-width: 1200px; margin: 0 auto; flex-direction: column; gap: 15px; }
         .header-panel { border: 1px solid var(--dark-neon); padding: 10px; display: flex; justify-content: space-between; font-size: 0.7rem; background: rgba(0,20,0,0.5); }
         .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
@@ -80,6 +72,9 @@
             cursor: pointer; font-family: inherit; transition: 0.2s;
         }
         .node-btn:hover { background: var(--neon); color: #000; }
+
+        .trap-btn { border-color: var(--alert); color: var(--alert); margin-top: 20px; }
+        .trap-btn:hover { background: var(--alert); color: #000; box-shadow: 0 0 15px var(--alert); }
         
         .alert-btn { display: block; width: 100%; padding: 10px; margin-top: 10px; border: 1px solid var(--alert); background: rgba(255, 0, 60, 0.1); color: var(--alert); text-decoration: none; cursor: pointer; font-family: inherit; }
         .alert-btn:hover { background: var(--alert); color: #000; }
@@ -100,17 +95,8 @@
 
 <div class="crt-overlay"></div>
 
-<div id="fatal-error-screen">
-    <div class="error-box">
-        <div class="error-code">ФАТАЛЬНАЯ ОШИБКА</div>
-        <p style="color: #fff; margin-bottom: 20px;">ERROR 404: SYSTEM_INTEGRITY_COMPROMISED</p>
-        <button id="repair-btn" class="alert-btn" onclick="startRepair()">РЕШИТЬ ОШИБКУ</button>
-        <div id="repair-logs" style="margin-top: 15px; font-size: 0.7rem; color: var(--neon); text-align: left;"></div>
-    </div>
-</div>
-
 <div id="alert-modal">
-    <div class="error-code" style="font-size: 1.5rem;">ВНИМАНИЕ!</div>
+    <div style="color: var(--alert); font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; animation: blink 0.5s infinite;">ВНИМАНИЕ!</div>
     <p style="color: #fff; margin-bottom: 10px;">ВЫ ВЗЛОМАНЫ</p>
     <p style="color: #fff; margin-bottom: 15px;">ВАШИ ДАННЫЕ У НАС. ВЫБИРАЙТЕ ЧТО БУДЕТЕ ДЕЛАТЬ</p>
     <a href="https://t.me/AmericanPsho" target="_blank" class="alert-btn">ОСПОРЯТЬ РЕШЕНИЕ</a>
@@ -146,6 +132,7 @@
             </div>
             <a href="https://t.me/GameHubHelio99" target="_blank" class="node-btn">TELEGRAM</a>
             <a href="https://alex546929.github.io/SteamGame/" target="_blank" class="node-btn">MY WEBSITE</a>
+            <button class="node-btn trap-btn" onclick="manualHack()">НАЖМИ СЮДА (: </button>
         </div>
 
         <div class="module">
@@ -175,65 +162,54 @@
 </div>
 
 <script>
-    // Обновление времени
     setInterval(() => { document.getElementById('sys-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 
-    // ПРОВЕРКА: Была ли решена ошибка ранее?
     window.onload = function() {
-        if (localStorage.getItem('system_repaired') === 'true') {
-            document.getElementById('fatal-error-screen').style.display = 'none';
-            document.getElementById('loading-screen').style.display = 'flex';
-            showTermuxLogs();
-        }
+        showTermuxLogs();
     };
 
-    // Исправление ошибки
-    function startRepair() {
-        const btn = document.getElementById('repair-btn');
-        const logsBox = document.getElementById('repair-logs');
-        btn.disabled = true; btn.innerText = "ИСПРАВЛЕНИЕ...";
-        const steps = ["Detecting sectors...", "Cleaning cache...", "Patching Error404...", "Finalizing..."];
-        let s = 0;
-        const iv = setInterval(() => {
-            if(s < steps.length) { logsBox.innerHTML += `<div>> ${steps[s]}</div>`; s++; }
-            else {
-                clearInterval(iv);
-                localStorage.setItem('system_repaired', 'true'); // Запоминаем решение
-                setTimeout(() => {
-                    document.getElementById('fatal-error-screen').style.display = 'none';
-                    document.getElementById('loading-screen').style.display = 'flex';
-                    showTermuxLogs();
-                }, 1000);
-            }
-        }, 1200);
-    }
-
-    // Termux логи + Шанс взлома
     function showTermuxLogs() {
-        const logs = ["pkg update", "Reading database...", "Injecting subject data...", "STARTING MAIN_FRAME..."];
+        const logs = [
+            {t: "apt update && apt upgrade -y", c: "log-blue"},
+            {t: "Connecting to global_server... [OK]", c: ""},
+            {t: "Bypassing Pentagon Firewall... Done.", c: "log-yellow"},
+            {t: "Downloading 1TB of cookies... 45%", c: ""},
+            {t: "ERROR: Fridge is empty. Go buy some cola.", c: "log-red"},
+            {t: "Mining Bitcoin on calculator... Speed: 0.0001 H/s", c: ""},
+            {t: "Scanning user social life... [NOT FOUND]", c: "log-yellow"},
+            {t: "Hacking NASA coffee machine... Success!", c: ""},
+            {t: "Deleting homework folder... Just kidding.", c: "log-blue"},
+            {t: "Cleaning system from cringe content...", c: ""},
+            {t: "Applying dark theme to the soul...", c: ""},
+            {t: "Finalizing ALEX_OS boot sequence...", c: "log-yellow"},
+            {t: "READY TO GO.", c: ""}
+        ];
+        
         let currentLog = 0;
         const loadScreen = document.getElementById('loading-screen');
+        
         function step() {
             if (currentLog < logs.length) {
-                const line = document.createElement('div'); line.className = 'termux-log';
-                line.innerHTML = `[${new Date().toLocaleTimeString()}] ${logs[currentLog]}`;
+                const line = document.createElement('div');
+                line.className = 'termux-log ' + logs[currentLog].c;
+                line.innerHTML = `[~] ${logs[currentLog].t}`;
                 loadScreen.appendChild(line);
-                currentLog++; setTimeout(step, 300);
+                loadScreen.scrollTop = loadScreen.scrollHeight;
+                currentLog++; 
+                setTimeout(step, 350);
             } else {
                 setTimeout(() => {
                     loadScreen.style.display = 'none';
                     document.getElementById('main-ui').style.display = 'flex';
                     initAllTyping();
-                    if (Math.random() <= 0.30) {
-                        setTimeout(() => { document.getElementById('alert-modal').style.display = 'block'; }, 10000);
-                    }
                 }, 800);
             }
         }
         step();
     }
 
-    // Копирование скрипта
+    function manualHack() { document.getElementById('alert-modal').style.display = 'block'; }
+
     function copyScript(btn) {
         const script = `loadstring(game:HttpGet("https://raw.githubusercontent.com/ScripterDeltaX/UniversalScript/refs/heads/main/InkGame-mm2UniversalAndOthers.lua"))()`;
         navigator.clipboard.writeText(script).then(() => {
@@ -242,14 +218,12 @@
         });
     }
 
-    // Глитч при закрытии взлома
     function triggerSystemFailure() {
         document.getElementById('alert-modal').style.display = 'none';
         document.body.classList.add('glitch-active');
         document.getElementById('out').innerHTML = "SYSTEM OVERLOAD: CRITICAL FAILURE DETECTED...";
     }
 
-    // Эффект печати
     function typeEffect(element, callback) {
         const text = element.getAttribute('data-text');
         const speed = element.getAttribute('data-speed') || 50;
