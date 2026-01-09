@@ -23,6 +23,56 @@
             text-transform: uppercase;
         }
 
+        .tv-off {
+            animation: tv-shutdown 0.4s ease-in forwards;
+            pointer-events: none;
+        }
+
+        @keyframes tv-shutdown {
+            0% { transform: scaleY(1); filter: brightness(1.5); }
+            40% { transform: scaleY(0.02) scaleX(1.2); filter: brightness(10); }
+            100% { transform: scaleY(0) scaleX(0); filter: brightness(50); opacity: 0; }
+        }
+
+        #final-screen {
+            display: none;
+            position: fixed; inset: 0;
+            background: #000;
+            z-index: 9999;
+            overflow: hidden;
+        }
+
+        #floating-glitch-text {
+            position: absolute;
+            white-space: nowrap;
+            color: #fff;
+            font-size: clamp(1rem, 6vw, 2.5rem); 
+            font-weight: bold;
+            text-shadow: 2px 0 var(--alert), -2px 0 #00d4ff;
+            animation: glitch-anim 0.2s infinite;
+            pointer-events: none;
+            padding: 5px;
+        }
+
+        @keyframes glitch-anim {
+            0% { transform: translate(2px, -1px); opacity: 1; }
+            50% { transform: translate(-3px, 2px) skew(5deg); filter: hue-rotate(90deg); opacity: 0.8; }
+            100% { transform: translate(1px, 1px); }
+        }
+
+        .typing-cursor::after {
+            content: '';
+            display: inline-block;
+            width: 2px;
+            height: 1.1rem;
+            background-color: var(--neon);
+            margin-left: 3px;
+            vertical-align: middle;
+            animation: mobile-blink 0.7s infinite;
+        }
+
+        @keyframes mobile-blink { 50% { opacity: 0; } }
+
         .glitch-active { animation: global-glitch 0.2s infinite; filter: contrast(150%) brightness(120%); }
         @keyframes global-glitch {
             0% { transform: translate(2px, -2px); }
@@ -38,7 +88,7 @@
             z-index: 100; pointer-events: none;
         }
 
-        #alert-modal {
+        .modal-box {
             display: none; position: fixed; top: 50%; left: 50%;
             transform: translate(-50%, -50%); width: 90%; max-width: 400px;
             background: #000; border: 2px solid var(--alert);
@@ -47,59 +97,52 @@
 
         #loading-screen {
             position: fixed; inset: 0; background: #000; z-index: 1000;
-            padding: 20px; font-size: 0.75rem; flex-direction: column;
+            padding: 10px; font-size: 0.7rem; flex-direction: column;
             display: flex; overflow-y: auto;
         }
-        .termux-log { color: var(--neon); line-height: 1.2; margin-bottom: 2px; }
-        .log-blue { color: #00d4ff; }
-        .log-yellow { color: #ffff00; }
+        .termux-log { line-height: 1.1; margin-bottom: 1px; word-break: break-all; }
         .log-red { color: var(--alert); }
+        .log-yellow { color: #ffff00; }
+        .log-blue { color: #00d4ff; }
+        .log-white { color: #fff; }
 
         .wrapper { display: none; padding: 15px; max-width: 1200px; margin: 0 auto; flex-direction: column; gap: 15px; }
-        .header-panel { border: 1px solid var(--dark-neon); padding: 10px; display: flex; justify-content: space-between; font-size: 0.7rem; background: rgba(0,20,0,0.5); }
+        .header-panel { border: 1px solid var(--dark-neon); padding: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.7rem; background: rgba(0,20,0,0.5); }
+        .close-btn { color: var(--alert); border: 1px solid var(--alert); padding: 2px 8px; cursor: pointer; transition: 0.2s; }
+        .close-btn:hover { background: var(--alert); color: #000; }
         .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         @media (max-width: 768px) { .main-grid { grid-template-columns: 1fr; } }
-
         .module { border: 1px solid var(--dark-neon); background: rgba(0, 10, 0, 0.8); padding: 15px; position: relative; }
         .module-label { position: absolute; top: 0; right: 0; background: var(--dark-neon); color: var(--neon); padding: 2px 8px; font-size: 0.6rem; }
         .module-title { border-bottom: 1px solid var(--dark-neon); margin-bottom: 15px; padding-bottom: 5px; font-size: 0.9rem; font-weight: bold; }
-
-        .node-btn {
-            display: block; width: 100%; padding: 15px; margin-top: 10px;
-            border: 1px solid var(--neon); background: rgba(0, 255, 65, 0.05);
-            color: var(--neon); text-decoration: none; text-align: center; font-weight: bold;
-            cursor: pointer; font-family: inherit; transition: 0.2s;
-        }
+        .node-btn { display: block; width: 100%; padding: 15px; margin-top: 10px; border: 1px solid var(--neon); background: rgba(0, 255, 65, 0.05); color: var(--neon); text-decoration: none; text-align: center; font-weight: bold; cursor: pointer; font-family: inherit; transition: 0.2s; }
         .node-btn:hover { background: var(--neon); color: #000; }
-
-        .trap-btn { border-color: var(--alert); color: var(--alert); margin-top: 20px; }
-        .trap-btn:hover { background: var(--alert); color: #000; box-shadow: 0 0 15px var(--alert); }
-        
-        .alert-btn { display: block; width: 100%; padding: 10px; margin-top: 10px; border: 1px solid var(--alert); background: rgba(255, 0, 60, 0.1); color: var(--alert); text-decoration: none; cursor: pointer; font-family: inherit; }
-        .alert-btn:hover { background: var(--alert); color: #000; }
-
-        .warning-text { font-size: 0.65rem; color: var(--neon); margin-top: 10px; line-height: 1.3; border: 1px solid var(--dark-neon); padding: 5px; background: rgba(0, 255, 65, 0.05); min-height: 40px; }
-        .data-list { list-style: none; font-size: 0.85rem; }
-        .data-list li { margin-bottom: 8px; }
         .tag-group { display: flex; flex-wrap: wrap; gap: 8px; }
         .tag { border: 1px solid var(--neon); padding: 5px 10px; font-size: 0.75rem; background: rgba(0,255,65,0.1); opacity: 0; }
-        
         .console-area { border: 1px solid var(--neon); background: rgba(0, 30, 0, 0.3); padding: 15px; min-height: 80px; }
-        .cursor { display: inline-block; width: 8px; height: 1rem; background: var(--neon); animation: blink 0.8s infinite; vertical-align: middle; }
-        @keyframes blink { 50% { opacity: 0; } }
         .type-effect { visibility: hidden; }
     </style>
 </head>
 <body>
 
+<audio id="kb-sound" src="computer-keyboard.mp3" loop></audio>
 <div class="crt-overlay"></div>
 
-<div id="alert-modal">
-    <div style="color: var(--alert); font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; animation: blink 0.5s infinite;">ВНИМАНИЕ!</div>
+<div id="alert-modal" class="modal-box">
+    <div style="color: var(--alert); font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; animation: mobile-blink 0.5s infinite;">ВНИМАНИЕ!</div>
     <p style="color: #fff; margin-bottom: 10px;">ВЫ ВЗЛОМАНЫ</p>
-    <p style="color: #fff; margin-bottom: 15px;">ВАШИ ДАННЫЕ У НАС. ВЫБИРАЙТЕ ЧТО БУДЕТЕ ДЕЛАТЬ</p>
-    <a href="https://t.me/AmericanPsho" target="_blank" class="alert-btn">ОСПОРЯТЬ РЕШЕНИЕ</a>
-    <button class="alert-btn" onclick="triggerSystemFailure()">ЗАКРЫТЬ ОКНО</button>
+    <a href="https://t.me/AmericanPsho" target="_blank" class="node-btn" style="border-color: var(--alert); color: var(--alert);">ОСПОРЯТЬ РЕШЕНИЕ</a>
+    <button class="node-btn" onclick="triggerSystemFailure()">ЗАКРЫТЬ ОКНО</button>
+</div>
+
+<div id="close-confirm" class="modal-box">
+    <p style="color: #fff; margin-bottom: 15px;">ТЫ ДЕЙСТВИТЕЛЬНО ХОЧЕШЬ ЗАКРЫТЬ САЙТ?</p>
+    <button class="node-btn" onclick="executeTvOff()" style="border-color: var(--alert); color: var(--alert);">ДА</button>
+    <button class="node-btn" style="border-color: var(--neon); color: var(--neon);" onclick="hideCloseModal()">НЕТ</button>
+</div>
+
+<div id="final-screen">
+    <div id="floating-glitch-text">АЛЕКС СЛЕДИТ ЗА ТОБОЙ!</div>
 </div>
 
 <div id="loading-screen"></div>
@@ -108,14 +151,14 @@
     <header class="header-panel">
         <span>USER: GUEST</span>
         <span id="sys-clock">00:00:00</span>
-        <span>STATUS: SECURE</span>
+        <div class="close-btn" onclick="showCloseModal()">[X]</div>
     </header>
 
     <div class="main-grid">
         <div class="module">
             <div class="module-label">ID_FILE</div>
             <div class="module-title">> IDENTITY</div>
-            <ul class="data-list">
+            <ul class="data-list" style="list-style: none;">
                 <li><span class="type-effect" data-text="NAME: ALEX"></span></li>
                 <li><span class="type-effect" data-text="AGE: 15"></span></li>
                 <li><span class="type-effect" data-text="LANG: RU / EN"></span></li>
@@ -126,12 +169,9 @@
         <div class="module">
             <div class="module-label">NET_LINKS</div>
             <div class="module-title">> CONTACT_NODES</div>
-            <div class="warning-text">
-                <span class="type-effect" data-speed="20" data-text="При переходе на данные ссылки вы автоматически даете согласие на обработку персональных данных"></span>
-            </div>
             <a href="https://t.me/GameHubHelio99" target="_blank" class="node-btn">TELEGRAM</a>
             <a href="https://alex546929.github.io/SteamGame/" target="_blank" class="node-btn">MY WEBSITE</a>
-            <button class="node-btn trap-btn" onclick="manualHack()">НАЖМИ СЮДА (: </button>
+            <button class="node-btn" style="border-color: var(--alert); color: var(--alert); margin-top:20px;" onclick="manualHack()">НАЖМИ СЮДА (: </button>
         </div>
 
         <div class="module">
@@ -154,32 +194,39 @@
         </div>
     </div>
 
-    <footer class="console-area">
-        <div id="out">> </div>
-        <span class="cursor"></span>
-    </footer>
+    <footer class="console-area"><div id="out">> </div></footer>
 </div>
 
 <script>
+    const sound = document.getElementById('kb-sound');
     setInterval(() => { document.getElementById('sys-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 
-    window.onload = function() {
-        showTermuxLogs();
-    };
+    window.onload = function() { showTermuxLogs(); };
 
     function showTermuxLogs() {
         const logs = [
             {t: "apt update && apt upgrade -y", c: "log-blue"},
-            {t: "Bypassing protocols...", c: ""},
-            {t: "INITIATING: H4CK1NG_Y0UR_455...", c: "log-red"},
-            {t: "Status: IN PROGRESS... DONE.", c: "log-yellow"},
-            {t: "Downloading more RAM (Free 2026)...", c: "log-blue"},
-            {t: "Locating your cat... FOUND.", c: ""},
-            {t: "Scanning for snacks... [0 FOUND]", c: "log-red"},
-            {t: "Sending anonymous pizza to your IP...", c: "log-blue"},
-            {t: "Stealing 0.000001 BTC... Success.", c: "log-yellow"},
-            {t: "Finalizing boot sequence...", c: ""},
-            {t: "SYSTEM READY. WELCOME, ALEX.", c: "log-blue"}
+            {t: "DECRYPTING SYSTEM CORE...", c: "log-white"},
+            {t: "H4CK1NG_Y0UR_455_IN_PROGRESS...", c: "log-red"},
+            {t: "Connecting to Pentagon... ACCESS DENIED.", c: "log-red"},
+            {t: "Connecting to Pentagon... OK. (Lol kidding)", c: "log-yellow"},
+            {t: "Downloading Altushka from GosUslugi...", c: "log-blue"},
+            {t: "Scanning for Pelmeni in the fridge...", c: "log-yellow"},
+            {t: "PELMENI NOT FOUND. CRITICAL ERROR.", c: "log-red"},
+            {t: "Loading Skibidi Toilet Virus...", c: "log-blue"},
+            {t: "Injecting Lua into NASA Coffee Machine...", c: "log-white"},
+            {t: "Locating your cat... FOUND. Name: Fluffy.", c: "log-blue"},
+            {t: "Deleting System32... just kidding, maybe.", c: "log-red"},
+            {t: "Mining Robux on your Calculator...", c: "log-yellow"},
+            {t: "Establishing connection with Alex...", c: "log-white"},
+            {t: "Checking IQ... ERROR: TOO HIGH FOR THIS SITE.", c: "log-blue"},
+            {t: "Installing 'How to be a Sigma' guide...", c: "log-yellow"},
+            {t: "Bypassing School Firewall... 100%", c: "log-blue"},
+            {t: "Sending anonymous pizza to your IP...", c: "log-white"},
+            {t: "Looking for your dad... 404 NOT FOUND.", c: "log-red"},
+            {t: "Found secret folder: 'Homework' (500GB Video).", c: "log-yellow"},
+            {t: "Starting Alex System... OK.", c: "log-blue"},
+            {t: "SYSTEM READY. WELCOME, CHAD.", c: "log-blue"}
         ];
         
         let currentLog = 0;
@@ -193,7 +240,7 @@
                 loadScreen.appendChild(line);
                 loadScreen.scrollTop = loadScreen.scrollHeight;
                 currentLog++; 
-                setTimeout(step, 300);
+                setTimeout(step, 150); // Ускоренная загрузка
             } else {
                 setTimeout(() => {
                     loadScreen.style.display = 'none';
@@ -205,57 +252,73 @@
         step();
     }
 
-    function manualHack() { document.getElementById('alert-modal').style.display = 'block'; }
-
-    function copyScript(btn) {
-        const script = `loadstring(game:HttpGet("https://raw.githubusercontent.com/ScripterDeltaX/UniversalScript/refs/heads/main/InkGame-mm2UniversalAndOthers.lua"))()`;
-        navigator.clipboard.writeText(script).then(() => {
-            const old = btn.innerText; btn.innerText = "COPIED!";
-            setTimeout(() => { btn.innerText = old; }, 2000);
-        });
+    let posX = 5, posY = 5, speedX = 2.5, speedY = 2.5;
+    function moveGlitchText() {
+        const el = document.getElementById('floating-glitch-text');
+        posX += speedX; posY += speedY;
+        if (posX + el.offsetWidth >= window.innerWidth || posX <= 0) speedX *= -1;
+        if (posY + el.offsetHeight >= window.innerHeight || posY <= 0) speedY *= -1;
+        el.style.left = posX + 'px'; el.style.top = posY + 'px';
+        requestAnimationFrame(moveGlitchText);
     }
 
+    function executeTvOff() {
+        hideCloseModal();
+        document.getElementById('main-ui').classList.add('tv-off');
+        setTimeout(() => {
+            document.getElementById('main-ui').style.display = 'none';
+            document.getElementById('final-screen').style.display = 'block';
+            moveGlitchText();
+        }, 400);
+    }
+
+    function showCloseModal() { document.getElementById('close-confirm').style.display = 'block'; }
+    function hideCloseModal() { document.getElementById('close-confirm').style.display = 'none'; }
+    function manualHack() { document.getElementById('alert-modal').style.display = 'block'; }
     function triggerSystemFailure() {
         document.getElementById('alert-modal').style.display = 'none';
         document.body.classList.add('glitch-active');
-        document.getElementById('out').innerHTML = "CRITICAL ERROR: HACKER DETECTED IN SYSTEM...";
+        document.getElementById('out').innerHTML = "> SYSTEM_CRITICAL_FAILURE: ALEX IS HERE";
     }
 
     function typeEffect(element, callback) {
         const text = element.getAttribute('data-text');
-        const speed = element.getAttribute('data-speed') || 50;
-        let i = 0; element.style.visibility = 'visible';
+        let i = 0; 
+        element.style.visibility = 'visible';
+        element.classList.add('typing-cursor');
         function step() {
-            if (i < text.length) { 
-                element.innerHTML += text.charAt(i); 
-                i++; 
-                setTimeout(step, speed); 
-            }
-            else if (callback) callback();
+            if (i < text.length) { element.innerHTML += text.charAt(i++); setTimeout(step, 50); } 
+            else { element.classList.remove('typing-cursor'); if (callback) callback(); }
         }
         step();
     }
 
     function initAllTyping() {
+        sound.play().catch(() => {});
         const elements = document.querySelectorAll('.type-effect');
         let index = 0;
         function next() {
-            if (index < elements.length) { typeEffect(elements[index], () => { index++; next(); }); }
+            if (index < elements.length) { typeEffect(elements[index++], next); } 
             else {
-                document.querySelectorAll('.tag').forEach((t, i) => { setTimeout(() => { t.style.opacity = "1"; }, i * 150); });
+                sound.pause();
+                document.querySelectorAll('.tag').forEach((t, i) => { setTimeout(() => t.style.opacity = "1", i * 150); });
+                const out = document.getElementById('out');
                 const finalMsg = "ВЛАДЕЛЕЦ ДАННОГО САЙТА НАХОДИТСЯ В МЕЖДУНАРОДНОМ РОЗЫСКЕ";
-                let j = 0; const out = document.getElementById('out');
-                function lastType() { 
-                    if (j < finalMsg.length) { 
-                        out.innerHTML += finalMsg.charAt(j); 
-                        j++; 
-                        setTimeout(lastType, 100); 
-                    } 
-                }
-                lastType();
+                out.classList.add('typing-cursor');
+                let j = 0;
+                function last() { if (j < finalMsg.length) { out.innerHTML += finalMsg.charAt(j++); setTimeout(last, 80); } }
+                last();
             }
         }
         next();
+    }
+
+    function copyScript(btn) {
+        const script = `loadstring(game:HttpGet("https://raw.githubusercontent.com/ScripterDeltaX/UniversalScript/refs/heads/main/InkGame-mm2UniversalAndOthers.lua"))()`;
+        navigator.clipboard.writeText(script).then(() => {
+            const old = btn.innerText; btn.innerText = "COPIED!";
+            setTimeout(() => btn.innerText = old, 2000);
+        });
     }
 </script>
 </body>
